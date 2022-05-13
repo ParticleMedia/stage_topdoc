@@ -15,6 +15,7 @@ function send_mail_msg() {
 
 ROOT="/data/zhaomin/stage_topdoc"
 time_flag=$(date +"%Y%m%d%H%M")
+mkdir ${ROOT}/log
 log="${ROOT}/log/log.${time_flag}"
 
 bash -x $ROOT/bin/run.sh &> $log
