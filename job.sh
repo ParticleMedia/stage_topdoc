@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ALARM_EMAILS="jiahao.deng@newsbreak.com"
+ALARM_EMAILS="min.zhao@newsbreak.com"
 
 function send_mail_msg() {
     local subject="$1"
@@ -13,7 +13,7 @@ function send_mail_msg() {
     return 0
 }
 
-ROOT="/data/dengjiahao/nearline"
+ROOT="/data/zhaomin/stage_topdoc"
 time_flag=$(date +"%Y%m%d%H%M")
 log="${ROOT}/log/log.${time_flag}"
 
@@ -21,7 +21,7 @@ bash -x $ROOT/bin/run.sh &> $log
 
 ret=$?
 if [ ${ret} -ne 0 ];then
-    subject="${time_flag} update nearline Failure Alarm"
+    subject="${time_flag} update stage_topdoc Failure Alarm"
     msg="${time_flag}"
     send_mail_msg "${subject}" "${msg}"
 fi
