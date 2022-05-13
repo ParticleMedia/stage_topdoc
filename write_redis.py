@@ -1,7 +1,7 @@
 import logging
 import argparse
 import redis
-
+import json
 
 logging.basicConfig(
     format='%(asctime)s : %(levelname)s : [WriteRedis] %(message)s',
@@ -26,13 +26,13 @@ def main():
 	pipe = rc.pipeline()
 
 	idx = 0
-	key = '%s#%s#%s' % (prefix, stage, days)
+	key = '%s#%s#%sd' % (prefix, stage, days)
 	result = []
 	with open(args.input, 'r') as f:
 		for idx, line in enumerate(f, start=1):
 			docid, _ = line.strip().split(',')
 			result.append(docid)
-		rc.setex(key, args.ttl, str(result))
+		rc.setex(key, args.ttl, json.dumps(result))
 		pipe.execute()
 		logging.info(str(idx))
 
