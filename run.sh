@@ -3,6 +3,7 @@
 set -x
 
 THREE_DAYS_AGO_FLAG=`date +%Y-%m-%d -d "-3 days"`
+TWO_DAYS_AGO_FLAG=`date +%Y-%m-%d -d "-2 days"`
 DATE_FLAG=`date +%Y-%m-%d -d "-1 days"`
 TODAY_FLAG=`date +%Y-%m-%d`
 TODAY_HOUR=`date +%H`
@@ -60,7 +61,7 @@ FROM ( \
     sum(cjv.clicked) / sum(cjv.checked) as ctr \
   FROM warehouse.online_cjv_parquet_hourly AS cjv \
   WHERE \
-    ((cjv.pdate = '${THREE_DAYS_AGO_FLAG}' and cjv.phour >= '${TODAY_HOUR}') or cjv.pdate = '${DATE_FLAG}' or (cjv.pdate = '${TODAY_FLAG}' and cjv.phour < '${TODAY_HOUR}')) \
+    ((cjv.pdate = '${THREE_DAYS_AGO_FLAG}' and cjv.phour >= '${TODAY_HOUR}') or cjv.pdate = '${TWO_DAYS_AGO_FLAG}' or cjv.pdate = '${DATE_FLAG}' or (cjv.pdate = '${TODAY_FLAG}' and cjv.phour < '${TODAY_HOUR}')) \
     AND cjv.joined = 1 \
     AND cjv.checked = 1 \
     AND cjv.channel_name = 'foryou' \
@@ -72,7 +73,7 @@ FROM ( \
     DISTINCT(doc_id) \
   FROM dim.document_parquet dim \
   WHERE \
-    ((dim.pdate = '${THREE_DAYS_AGO_FLAG}' and dim.phour >= '${TODAY_HOUR}') or dim.pdate = '${DATE_FLAG}' or (dim.pdate = '${TODAY_FLAG}' and dim.phour < '${TODAY_HOUR}')) \
+    ((dim.pdate = '${THREE_DAYS_AGO_FLAG}' and dim.phour >= '${TODAY_HOUR}') or dim.pdate = '${TWO_DAYS_AGO_FLAG}' or dim.pdate = '${DATE_FLAG}' or (dim.pdate = '${TODAY_FLAG}' and dim.phour < '${TODAY_HOUR}')) \
 ) b ON a.doc_id = b.doc_id \
 ORDER BY ctr DESC \
 LIMIT 50"
