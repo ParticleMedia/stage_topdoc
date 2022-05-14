@@ -77,7 +77,7 @@ FROM ( \
     ((dim.pdate = '${THREE_DAYS_AGO_FLAG}' and dim.phour >= '${TODAY_HOUR}') or dim.pdate = '${TWO_DAYS_AGO_FLAG}' or dim.pdate = '${DATE_FLAG}' or (dim.pdate = '${TODAY_FLAG}' and dim.phour < '${TODAY_HOUR}')) \
 ) b ON a.doc_id = b.doc_id \
 ORDER BY ctr DESC \
-LIMIT 50"
+LIMIT 200"
     local sql_file=${LOCAL_BIN_PATH}/hive.sql.docid
     local hive_cmd="insert overwrite directory '${hdfs_cjv_path}' row format delimited fields terminated by ',' ${hive_sql};"
     echo "${hive_cmd}" >${sql_file}

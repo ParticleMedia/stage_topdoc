@@ -27,11 +27,11 @@ def main():
 
 	idx = 0
 	key = '%s#%s#%sd' % (prefix, stage, days)
-	result = []
+	result = {}
 	with open(args.input, 'r') as f:
 		for idx, line in enumerate(f, start=1):
-			docid, _ = line.strip().split(',')
-			result.append(docid)
+			docid, ctr = line.strip().split(',')
+			result[docid] = ctr
 		rc.setex(key, args.ttl, json.dumps(result))
 		pipe.execute()
 		logging.info(str(idx))
