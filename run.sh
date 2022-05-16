@@ -66,7 +66,7 @@ FROM ( \
     AND cjv.nr_condition not in ('deeplink', 'topheadline', 'dma_sports', 'opcard') \
     AND cjv.nr_condition not in ('topheadline', 'local','localbriefing','localcurpos','localheadline','localpick','local_video','local_video_card', 'failover_local') \
     GROUP BY cjv.doc_id \
-    HAVING sum(cjv.checked) >= 100000 \
+    HAVING sum(cjv.checked) >= 10000 \
 ) a JOIN ( \
   SELECT \
     DISTINCT(doc_id) \
