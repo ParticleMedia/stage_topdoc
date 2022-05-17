@@ -56,7 +56,7 @@ function dump_docid_from_hive() {
 FROM ( \
   SELECT \
     doc_id, \
-    sum(cjv.clicked) / sum(cjv.checked) as ctr \
+    sum(cjv.clicked) / sum(cjv.checked) as ctr, \
     (sum(cjv.clicked) + 10 * sum(cjv.thumbed_up) +  10 * sum(cjv.shared) + 10 * (sum(cjv.comments_posted) + sum(cjv.comments_thumbed_up))) * 1.00000 /  sum(checked) as combine_ctr \
   FROM warehouse.online_cjv_parquet_hourly AS cjv \
   WHERE \
