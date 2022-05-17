@@ -52,11 +52,12 @@ function dump_docid_from_hive() {
     local hdfs_cjv_path=${HADOOP_ROOT_PATH}/stage_topdoc/${DATE_FLAG}/docid
     local hive_sql="SELECT \
   a.doc_id, \
-  ctr \
+  combine_ctr \
 FROM ( \
   SELECT \
     doc_id, \
     sum(cjv.clicked) / sum(cjv.checked) as ctr \
+    (sum(cjv.clicked) + 10 * sum(cjv.thumbed_up) +  10 * sum(cjv.shared) + 10 * (sum(cjv.comments_posted) + sum(cjv.comments_thumbed_up))) * 1.00000 /  sum(checked) as combine_ctr \
   FROM warehouse.online_cjv_parquet_hourly AS cjv \
   WHERE \
     ((cjv.pdate = '${DATE_FLAG}' and cjv.phour >= '${TODAY_HOUR}') or (cjv.pdate = '${TODAY_FLAG}' and cjv.phour < '${TODAY_HOUR}')) \
@@ -74,7 +75,7 @@ FROM ( \
   WHERE \
     ((dim.pdate = '${DATE_FLAG}' and dim.phour >= '${TODAY_HOUR}')  or (dim.pdate = '${TODAY_FLAG}' and dim.phour < '${TODAY_HOUR}')) \
 ) b ON a.doc_id = b.doc_id \
-ORDER BY ctr DESC \
+ORDER BY combine_ctr DESC \
 LIMIT 200"
     local sql_file=${LOCAL_BIN_PATH}/hive.sql.docid
     local hive_cmd="insert overwrite directory '${hdfs_cjv_path}' row format delimited fields terminated by ',' ${hive_sql};"
