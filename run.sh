@@ -5,8 +5,8 @@ set -x
 TWO_DAYS_AGO_FLAG=`date +%Y-%m-%d -d "-2 days"`
 DATE_FLAG=`date +%Y-%m-%d -d "-1 days"`
 TODAY_FLAG=`date +%Y-%m-%d`
-NOW_TIME_FLAG=`date +'%Y-%m-%d %H-%M'`
-TWO_DAYS_AGO_NOW_TIME_FLAG=`date +'%Y-%m-%d %H-%M' -d "-2 days"`
+NOW_TIME_FLAG=`date +'%Y-%m-%d %H:%M'`
+TWO_DAYS_AGO_NOW_TIME_FLAG=`date +'%Y-%m-%d %H:%M' -d "-2 days"`
 LOG_CLEANUP_DAY=30
 DATA_CLEANUP_DAY=8
 CHECK_STAGE=10000
@@ -73,6 +73,7 @@ FROM (   \
   GROUP BY cjv.doc_id     \
   HAVING (sum(cjv.clicked) + 2 * sum(cjv.thumbed_up) +  5 * sum(cjv.shared) + 5 * sum(cjv.comments_thumbed_up) + 10 * sum(cjv.comments_posted)) * 1.00000 /  sum(checked) >= 0.18\
   AND sum(cjv.clicked) / sum(cjv.checked) >= 0.07\
+  AND sum(cjv.clicked) / sum(cjv.checked) <= 0.16\
   AND sum(cjv.checked) > 1000) a \
   JOIN (   \
     SELECT     \
