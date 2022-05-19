@@ -30,8 +30,8 @@ def main():
 	result = {}
 	with open(args.input, 'r') as f:
 		for idx, line in enumerate(f, start=1):
-			docid, ctr = line.strip().split(',')
-			result[docid] = ctr
+			docid, check, combine_ctr = line.strip().split(',')
+			result[docid] = combine_ctr
 		rc.setex(key, args.ttl, json.dumps(result))
 		pipe.execute()
 		logging.info(str(idx))

@@ -2,9 +2,11 @@
 
 set -x
 
+TWO_DAYS_AGO_FLAG=`date +%Y-%m-%d -d "-2 days"`
 DATE_FLAG=`date +%Y-%m-%d -d "-1 days"`
 TODAY_FLAG=`date +%Y-%m-%d`
-TODAY_HOUR=`date +%H`
+NOW_TIME_FLAG=`date +'%Y-%m-%d %H-%M'`
+TWO_DAYS_AGO_NOW_TIME_FLAG=`date +'%Y-%m-%d %H-%M' -d "-2 days"`
 LOG_CLEANUP_DAY=30
 DATA_CLEANUP_DAY=8
 CHECK_STAGE=10000
@@ -50,33 +52,37 @@ function copy_hive_to_local()
 
 function dump_docid_from_hive() {
     local hdfs_cjv_path=${HADOOP_ROOT_PATH}/stage_topdoc/${DATE_FLAG}/docid
-    local hive_sql="SELECT \
+    local hive_sql="SELECT   \
   a.doc_id, \
+  checked,\
   combine_ctr \
-FROM ( \
-  SELECT \
-    doc_id, \
-    sum(cjv.clicked) / sum(cjv.checked) as ctr, \
-    (sum(cjv.clicked) + 10 * sum(cjv.thumbed_up) +  10 * sum(cjv.shared) + 10 * (sum(cjv.comments_posted) + sum(cjv.comments_thumbed_up))) * 1.00000 /  sum(checked) as combine_ctr \
-  FROM warehouse.online_cjv_parquet_hourly AS cjv \
-  WHERE \
-    ((cjv.pdate = '${DATE_FLAG}' and cjv.phour >= '${TODAY_HOUR}') or (cjv.pdate = '${TODAY_FLAG}' and cjv.phour < '${TODAY_HOUR}')) \
-    AND cjv.joined = 1 \
-    AND cjv.checked = 1 \
-    AND cjv.channel_name = 'foryou' \
-    AND cjv.nr_condition not in ('deeplink', 'topheadline', 'dma_sports', 'opcard') \
-    AND cjv.nr_condition not in ('topheadline', 'local','localbriefing','localcurpos','localheadline','localpick','local_video','local_video_card', 'failover_local') \
-    GROUP BY cjv.doc_id \
-    HAVING sum(cjv.checked) >= 10000 \
-) a JOIN ( \
-  SELECT \
-    DISTINCT(doc_id) \
-  FROM dim.document_parquet dim \
-  WHERE \
-    ((dim.pdate = '${DATE_FLAG}' and dim.phour >= '${TODAY_HOUR}')  or (dim.pdate = '${TODAY_FLAG}' and dim.phour < '${TODAY_HOUR}')) \
-) b ON a.doc_id = b.doc_id \
-ORDER BY combine_ctr DESC \
-LIMIT 200"
+FROM (   \
+  SELECT\
+    doc_id,\
+    sum(cjv.checked) as checked,\
+    (sum(cjv.clicked) + 2 * sum(cjv.thumbed_up) +  5 * sum(cjv.shared) + 5 * sum(cjv.comments_thumbed_up) + 10 * sum(cjv.comments_posted)) * 1.00000 / sum(checked) as combine_ctr \
+  FROM warehouse.online_cjv_parquet_hourly AS cjv   \
+  WHERE (cjv.pdate >= '${TWO_DAYS_AGO_FLAG}' and cjv.pdate <= '${TODAY_FLAG}')\
+  AND (from_unixtime(unix_timestamp(ts), 'yyyy-MM-dd HH:mm') >= '${TWO_DAYS_AGO_NOW_TIME_FLAG}') \
+  AND (from_unixtime(unix_timestamp(ts), 'yyyy-MM-dd HH:mm') <= '${NOW_TIME_FLAG}')    \
+  AND cjv.joined = 1    \
+  AND cjv.checked = 1   \
+  AND cjv.channel_name = 'foryou'    \
+  AND cjv.nr_condition not in ('deeplink', 'topheadline', 'dma_sports', 'opcard')   \
+  AND cjv.nr_condition not in ('topheadline', 'local','localbriefing','localcurpos','localheadline','localpick','local_video','local_video_card', 'failover_local')   \
+  GROUP BY cjv.doc_id     \
+  HAVING (sum(cjv.clicked) + 2 * sum(cjv.thumbed_up) +  5 * sum(cjv.shared) + 5 * sum(cjv.comments_thumbed_up) + 10 * sum(cjv.comments_posted)) * 1.00000 /  sum(checked) >= 0.18\
+  AND sum(cjv.clicked) / sum(cjv.checked) >= 0.07\
+  AND sum(cjv.checked) > 1000) a \
+  JOIN (   \
+    SELECT     \
+      DISTINCT(doc_id)   \
+    FROM dim.document_parquet dim  \
+    WHERE (dim.pdate >= '${TWO_DAYS_AGO_FLAG}' and dim.pdate <= '${TODAY_FLAG}')\
+    AND (from_unixtime(unix_timestamp(dim.insert_time), 'yyyy-MM-dd HH:mm') >= '${TWO_DAYS_AGO_NOW_TIME_FLAG}') \
+    AND (from_unixtime(unix_timestamp(dim.insert_time), 'yyyy-MM-dd HH:mm') <= '${NOW_TIME_FLAG}')) b \
+    ON a.doc_id = b.doc_id ORDER BY checked DESC \
+    LIMIT 200"
     local sql_file=${LOCAL_BIN_PATH}/hive.sql.docid
     local hive_cmd="insert overwrite directory '${hdfs_cjv_path}' row format delimited fields terminated by ',' ${hive_sql};"
     echo "${hive_cmd}" >${sql_file}
